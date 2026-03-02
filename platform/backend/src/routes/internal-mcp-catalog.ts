@@ -395,6 +395,12 @@ const internalMcpCatalogRoutes: FastifyPluginAsyncZod = async (fastify) => {
         delete restBody.oauthConfig.client_secret;
       }
 
+      // Handle switching away from OAuth: clean up old client secret
+      if (restBody.oauthConfig === null && originalCatalogItem.clientSecretId) {
+        await secretManager().deleteSecret(originalCatalogItem.clientSecretId);
+        restBody.clientSecretId = null;
+      }
+
       // Handle local config secrets - either via Readonly Vault or direct values
       if (localConfigVaultPath && localConfigVaultKey) {
         // Readonly Vault flow for local config secrets

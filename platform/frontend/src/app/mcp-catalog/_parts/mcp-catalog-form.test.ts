@@ -1,5 +1,9 @@
+import type { McpCatalogFormValues } from "./mcp-catalog-form.types";
 import { formSchema } from "./mcp-catalog-form.types";
-import { stripEnvVarQuotes } from "./mcp-catalog-form.utils";
+import {
+  stripEnvVarQuotes,
+  transformFormToApiData,
+} from "./mcp-catalog-form.utils";
 
 describe("stripEnvVarQuotes", () => {
   describe("real-world environment variable examples", () => {
@@ -288,5 +292,64 @@ describe("formSchema", () => {
         "At least one redirect URI is required",
       );
     });
+  });
+});
+
+describe("transformFormToApiData", () => {
+  const baseFormValues: McpCatalogFormValues = {
+    name: "test-server",
+    serverType: "remote",
+    serverUrl: "https://example.com/mcp",
+    authMethod: "none",
+    oauthConfig: undefined,
+  };
+
+  it("oauthConfig is null when authMethod is bearer", () => {
+    const result = transformFormToApiData({
+      ...baseFormValues,
+      authMethod: "bearer",
+    });
+    expect(result.oauthConfig).toBeNull();
+  });
+
+  it("oauthConfig is null when authMethod is raw_token", () => {
+    const result = transformFormToApiData({
+      ...baseFormValues,
+      authMethod: "raw_token",
+    });
+    expect(result.oauthConfig).toBeNull();
+  });
+
+  it("oauthConfig is null when authMethod is none", () => {
+    const result = transformFormToApiData({
+      ...baseFormValues,
+      authMethod: "none",
+    });
+    expect(result.oauthConfig).toBeNull();
+  });
+
+  it("oauthConfig is set when authMethod is oauth", () => {
+    const result = transformFormToApiData({
+      ...baseFormValues,
+      authMethod: "oauth",
+      oauthConfig: {
+        client_id: "test-id",
+        client_secret: "test-secret",
+        redirect_uris: "https://localhost/callback",
+        scopes: "read,write",
+        supports_resource_metadata: true,
+      },
+    });
+    expect(result.oauthConfig).not.toBeNull();
+    expect(result.oauthConfig?.client_id).toBe("test-id");
+  });
+
+  it("null oauthConfig survives JSON serialization", () => {
+    const result = transformFormToApiData({
+      ...baseFormValues,
+      authMethod: "bearer",
+    });
+    const roundTripped = JSON.parse(JSON.stringify(result));
+    expect(roundTripped.oauthConfig).toBeNull();
   });
 });

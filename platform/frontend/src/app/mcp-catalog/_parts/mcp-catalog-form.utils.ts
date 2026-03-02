@@ -116,7 +116,7 @@ export function transformFormToApiData(
       },
     };
     // Clear oauthConfig when using Bearer Token
-    data.oauthConfig = undefined;
+    data.oauthConfig = null;
   } else if (values.authMethod === "raw_token") {
     // Handle Token (no prefix) configuration
     data.userConfig = {
@@ -129,11 +129,11 @@ export function transformFormToApiData(
       },
     };
     // Clear oauthConfig when using Token
-    data.oauthConfig = undefined;
+    data.oauthConfig = null;
   } else {
     // No authentication - clear both configs
     data.userConfig = {};
-    data.oauthConfig = undefined;
+    data.oauthConfig = null;
   }
 
   // Handle labels

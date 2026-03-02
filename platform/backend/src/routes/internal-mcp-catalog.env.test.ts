@@ -702,6 +702,77 @@ spec:
   });
 
   // =========================================================================
+  // 4. AUTH METHOD SWITCHING
+  // =========================================================================
+  describe("AUTH METHOD SWITCHING", () => {
+    test("4.1 switches from OAuth to Bearer — clears oauthConfig", async () => {
+      // Create catalog with OAuth config
+      const catalog = await InternalMcpCatalogModel.create({
+        name: "test-oauth-to-bearer",
+        serverType: "remote",
+        serverUrl: "https://example.com/mcp",
+        oauthConfig: {
+          name: "test-oauth-to-bearer",
+          server_url: "https://example.com/mcp",
+          client_id: "test-client-id",
+          redirect_uris: ["https://localhost/callback"],
+          scopes: ["read", "write"],
+          default_scopes: ["read", "write"],
+          supports_resource_metadata: true,
+        },
+      });
+
+      expect(catalog.oauthConfig).not.toBeNull();
+
+      // Switch to Bearer by setting oauthConfig to null and providing userConfig
+      const updated = await InternalMcpCatalogModel.update(catalog.id, {
+        oauthConfig: null,
+        userConfig: {
+          access_token: {
+            type: "string",
+            title: "Access Token",
+            description: "Bearer token for authentication",
+            required: true,
+            sensitive: true,
+          },
+        },
+      });
+
+      expect(updated?.oauthConfig).toBeNull();
+      expect(updated?.userConfig).toHaveProperty("access_token");
+    });
+
+    test("4.2 switches from OAuth to no auth — clears oauthConfig and userConfig", async () => {
+      // Create catalog with OAuth config
+      const catalog = await InternalMcpCatalogModel.create({
+        name: "test-oauth-to-none",
+        serverType: "remote",
+        serverUrl: "https://example.com/mcp",
+        oauthConfig: {
+          name: "test-oauth-to-none",
+          server_url: "https://example.com/mcp",
+          client_id: "test-client-id",
+          redirect_uris: ["https://localhost/callback"],
+          scopes: ["read", "write"],
+          default_scopes: ["read", "write"],
+          supports_resource_metadata: true,
+        },
+      });
+
+      expect(catalog.oauthConfig).not.toBeNull();
+
+      // Switch to no auth
+      const updated = await InternalMcpCatalogModel.update(catalog.id, {
+        oauthConfig: null,
+        userConfig: {},
+      });
+
+      expect(updated?.oauthConfig).toBeNull();
+      expect(updated?.userConfig).toEqual({});
+    });
+  });
+
+  // =========================================================================
   // Edge Cases
   // =========================================================================
   describe("Edge Cases", () => {
